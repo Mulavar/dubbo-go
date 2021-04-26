@@ -163,14 +163,17 @@ func loadConsumerConfig() {
 		logger.Warnf("consumerConfig is nil!")
 		return
 	}
-	// init other consumer config
+	// init other consumer config, namely 'rest' config.
 	conConfigType := consumerConfig.ConfigType
+	// rest: rest
 	for key, value := range extension.GetDefaultConfigReader() {
 		if conConfigType != nil {
 			if v, ok := conConfigType[key]; ok {
 				value = v
 			}
 		}
+
+		// &RestConfigReader.ReadConsumerConfig
 		if err := extension.GetConfigReaders(value).ReadConsumerConfig(consumerConfig.fileStream); err != nil {
 			logger.Errorf("ReadConsumerConfig error: %#v for %s", perrors.WithStack(err), value)
 		}
@@ -257,12 +260,14 @@ func loadProviderConfig() {
 		}
 	}
 
+	// 启动配置中心
 	checkApplicationName(providerConfig.ApplicationConfig)
 	if err := configCenterRefreshProvider(); err != nil {
 		logger.Errorf("[provider config center refresh] %#v", err)
 	}
 	checkRegistries(providerConfig.Registries, providerConfig.Registry)
 
+	// 为什么要缓存配置
 	// Write the current configuration to cache file.
 	if providerConfig.CacheFile != "" {
 		if data, err := yaml.MarshalYML(providerConfig); err != nil {
@@ -281,6 +286,7 @@ func loadProviderConfig() {
 			continue
 		}
 		svs.id = key
+		// 绑定 ServiceConfig 和对应的 ref（服务实体）
 		svs.Implement(rpcService)
 		svs.Protocols = providerConfig.Protocols
 		if err := svs.Export(); err != nil {

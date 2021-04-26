@@ -37,6 +37,7 @@ import (
 )
 
 func init() {
+	// 将默认的代理工厂注册到全局代理工厂map中
 	extension.SetProxyFactory("default", NewDefaultProxyFactory)
 }
 
@@ -83,6 +84,7 @@ type ProxyInvoker struct {
 }
 
 // Invoke is used to call service method by invocation
+// 整体与 dubbo 思路一致，通过反射执行服务实体的方法
 func (pi *ProxyInvoker) Invoke(ctx context.Context, invocation protocol.Invocation) protocol.Result {
 	result := &protocol.RPCResult{}
 	result.SetAttachments(invocation.Attachments())
@@ -112,6 +114,7 @@ func (pi *ProxyInvoker) Invoke(ctx context.Context, invocation protocol.Invocati
 	}
 
 	in := []reflect.Value{svc.Rcvr()}
+	// 与 context 示例一致，todo 默认的值什么时候附带上的
 	if method.CtxType() != nil {
 		ctx = context.WithValue(ctx, constant.AttachmentKey, invocation.Attachments())
 		in = append(in, method.SuiteContext(ctx))

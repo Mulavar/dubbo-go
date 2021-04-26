@@ -151,6 +151,7 @@ func (c *ServiceConfig) Export() error {
 	// TODO: config center start here
 
 	// TODO: delay export
+	// why delay?
 	if c.unexported != nil && c.unexported.Load() {
 		err := perrors.Errorf("The service %v has already unexported!", c.InterfaceName)
 		logger.Errorf(err.Error())
@@ -161,19 +162,24 @@ func (c *ServiceConfig) Export() error {
 		return nil
 	}
 
+	// 筛选所有该 service 指定且能够使用的的注册中心
 	regUrls := loadRegistries(c.Registry, providerConfig.Registries, common.PROVIDER)
 	urlMap := c.getUrlMap()
+	// 筛选所有该 service 指定的且能够使用的 rpc 协议
 	protocolConfigs := loadProtocol(c.Protocol, c.Protocols)
 	if len(protocolConfigs) == 0 {
 		logger.Warnf("The service %v's '%v' protocols don't has right protocolConfigs", c.InterfaceName, c.Protocol)
 		return nil
 	}
 
+	// 获取可用的端口
 	ports := getRandomPort(protocolConfigs)
 	nextPort := ports.Front()
+	// 获取代理工厂，一般是默认的全局代理工厂，也可自己拓展
 	proxyFactory := extension.GetProxyFactory(providerConfig.ProxyFactory)
 	for _, proto := range protocolConfigs {
 		// registry the service reflect
+		// 将服务实体的信息通过反射存储
 		methods, err := common.ServiceMap.Register(c.InterfaceName, proto.Name, c.Group, c.Version, c.rpcService)
 		if err != nil {
 			formatErr := perrors.Errorf("The service %v export the protocol %v error! Error message is %v.",
@@ -187,6 +193,7 @@ func (c *ServiceConfig) Export() error {
 			port = nextPort.Value.(string)
 			nextPort = nextPort.Next()
 		}
+		// todo URL 中的成员和 Values 部分会不会有信息冗余
 		ivkURL := common.NewURLWithOptions(
 			common.WithPath(c.InterfaceName),
 			common.WithProtocol(proto.Name),
@@ -213,13 +220,20 @@ func (c *ServiceConfig) Export() error {
 			c.cacheMutex.Lock()
 			if c.cacheProtocol == nil {
 				logger.Infof(fmt.Sprintf("First load the registry protocol, url is {%v}!", ivkURL))
+				// 使用特定的 *registryProtocol
 				c.cacheProtocol = extension.GetProtocol("registry")
 			}
 			c.cacheMutex.Unlock()
 
 			for _, regUrl := range regUrls {
+				// URL 有两个，分别定位 invoker 和 注册中心
 				regUrl.SubURL = ivkURL
+				// 生成服务实体的代理
 				invoker := proxyFactory.GetInvoker(regUrl)
+				// 向注册中心注册
+				// 生成 exporter -> invoker 的映射
+				// 开启端口监听服务
+				// 通知订阅者
 				exporter := c.cacheProtocol.Export(invoker)
 				if exporter == nil {
 					return perrors.New(fmt.Sprintf("Registry protocol new exporter error, registry is {%v}, url is {%v}", regUrl, ivkURL))
@@ -228,14 +242,17 @@ func (c *ServiceConfig) Export() error {
 			}
 		} else {
 			invoker := proxyFactory.GetInvoker(ivkURL)
+			// 与上面相比少了注册中心那步
 			exporter := extension.GetProtocol(protocolwrapper.FILTER).Export(invoker)
 			if exporter == nil {
 				return perrors.New(fmt.Sprintf("Filter protocol without registry new exporter error, url is {%v}", ivkURL))
 			}
 			c.exporters = append(c.exporters, exporter)
 		}
+		// todo ?????
 		publishServiceDefinition(ivkURL)
 	}
+	// 标记服务已 export
 	c.exported.Store(true)
 	return nil
 }
@@ -267,6 +284,7 @@ func (c *ServiceConfig) Implement(s common.RPCService) {
 	c.rpcService = s
 }
 
+// 内置定义的 键值对
 func (c *ServiceConfig) getUrlMap() url.Values {
 	urlMap := url.Values{}
 	// first set user params

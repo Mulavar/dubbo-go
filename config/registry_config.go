@@ -98,6 +98,7 @@ func loadRegistries(targetRegistries string, registries map[string]*RegistryConf
 		if target {
 			addresses := strings.Split(registryConf.Address, ",")
 			address := addresses[0]
+			// 规范 registries 的格式，分离 protocol 和 address
 			address = translateRegistryConf(address, registryConf)
 			url, err := common.NewURL(constant.REGISTRY_PROTOCOL+"://"+address,
 				common.WithParams(registryConf.getUrlMap(roleType)),

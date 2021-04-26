@@ -23,6 +23,7 @@ import (
 
 var (
 	conServices = map[string]common.RPCService{} // service name -> service
+	// 存储服务名 -> 服务实体的映射
 	proServices = map[string]common.RPCService{} // service name -> service
 )
 

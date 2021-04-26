@@ -187,6 +187,9 @@ func (sm *serviceMap) GetInterface(interfaceName string) []*Service {
 
 // Register registers a service by @interfaceName and @protocol
 func (sm *serviceMap) Register(interfaceName, protocol, group, version string, rcvr RPCService) (string, error) {
+	// 分为两部分
+	// 1. protocol -> service name -> ref
+	// 2. interfaceName -> ref
 	if sm.serviceMap[protocol] == nil {
 		sm.serviceMap[protocol] = make(map[string]*Service)
 	}
@@ -209,6 +212,7 @@ func (sm *serviceMap) Register(interfaceName, protocol, group, version string, r
 		return "", perrors.New(s)
 	}
 
+	// group/interfaceName:version
 	sname = ServiceKey(interfaceName, group, version)
 	if server := sm.GetService(protocol, interfaceName, group, version); server != nil {
 		return "", perrors.New("service already defined: " + sname)

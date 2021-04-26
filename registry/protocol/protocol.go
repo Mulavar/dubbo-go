@@ -206,6 +206,7 @@ func (proto *registryProtocol) Export(invoker protocol.Invoker) protocol.Exporte
 	if loaded {
 		logger.Infof("The exporter has been cached, and will return cached exporter!")
 	} else {
+		// 每次一个新的 provider 都会先走到这里，使用对应的协议生成 exporter ，开启端口监听
 		wrappedInvoker := newWrappedInvoker(invoker, providerUrl)
 		cachedExporter = extension.GetProtocol(protocolwrapper.FILTER).Export(wrappedInvoker)
 		proto.bounds.Store(key, cachedExporter)
@@ -213,6 +214,7 @@ func (proto *registryProtocol) Export(invoker protocol.Invoker) protocol.Exporte
 	}
 
 	go func() {
+		// 通知监听者
 		if err = reg.Subscribe(overriderUrl, overrideSubscribeListener); err != nil {
 			logger.Warnf("reg.subscribe(overriderUrl:%v) = error:%v", overriderUrl, err)
 		}

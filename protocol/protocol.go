@@ -52,6 +52,7 @@ type Exporter interface {
 
 // BaseProtocol is default protocol implement.
 type BaseProtocol struct {
+	// 存储 exporter -> invoker 的映射
 	exporterMap *sync.Map
 	invokers    []Invoker
 }
