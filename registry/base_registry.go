@@ -137,6 +137,7 @@ func (r *BaseRegistry) Register(conf *common.URL) error {
 		err error
 	)
 	// if developer define registry port and ip, use it first.
+	// 如果没定义呢？
 	if ipToRegistry := os.Getenv("DUBBO_IP_TO_REGISTRY"); ipToRegistry != "" {
 		conf.Ip = ipToRegistry
 	}
@@ -423,6 +424,7 @@ func (r *BaseRegistry) Subscribe(url *common.URL, notifyListener NotifyListener)
 				break
 			} else {
 				logger.Infof("update begin, service event: %v", serviceEvent.String())
+				// 调用 RegistryDirectory.Notify() 刷新 Invoker
 				notifyListener.Notify(serviceEvent)
 			}
 		}

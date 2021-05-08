@@ -146,6 +146,7 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 	}
 
 	// new registry directory for store service url from registry
+	// 这里也会启动 listener 监听 znode 节点
 	directory, err := extension.GetDefaultRegistryDirectory(registryUrl, reg)
 	if err != nil {
 		logger.Errorf("consumer service %v create registry directory error, error message is %s, and will return nil invoker!",

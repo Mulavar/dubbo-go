@@ -61,6 +61,7 @@ type RegistryDirectory struct {
 	consumerURL                    *common.URL
 	cacheOriginUrl                 *common.URL
 	configurators                  []config_center.Configurator
+	// todo 这两个 listener 作用和区别
 	consumerConfigurationListener  *consumerConfigurationListener
 	referenceConfigurationListener *referenceConfigurationListener
 	// serviceKey                     string
@@ -82,6 +83,7 @@ func NewRegistryDirectory(url *common.URL, registry registry.Registry) (cluster.
 		registry:         registry,
 	}
 
+	// subURL: interfacename
 	dir.consumerURL = dir.getConsumerUrl(url.SubURL)
 
 	if routerChain, err := chain.NewRouterChain(dir.consumerURL); err == nil {
@@ -92,6 +94,7 @@ func NewRegistryDirectory(url *common.URL, registry registry.Registry) (cluster.
 
 	dir.consumerConfigurationListener = newConsumerConfigurationListener(dir)
 
+	// 启动一个协程对服务进行监听
 	go dir.subscribe(url.SubURL)
 	return dir, nil
 }
@@ -101,6 +104,7 @@ func (dir *RegistryDirectory) subscribe(url *common.URL) {
 	logger.Debugf("subscribe service :%s for RegistryDirectory.", url.Key())
 	dir.consumerConfigurationListener.addNotifyListener(dir)
 	dir.referenceConfigurationListener = newReferenceConfigurationListener(dir, url)
+	// 订阅 interfacename
 	if err := dir.registry.Subscribe(url, dir); err != nil {
 		logger.Error("registry.Subscribe(url:%v, dir:%v) = error:%v", url, dir, err)
 	}
@@ -484,7 +488,9 @@ func (l *referenceConfigurationListener) Process(event *config_center.ConfigChan
 }
 
 type consumerConfigurationListener struct {
+	// 配置监听器
 	registry.BaseConfigurationListener
+	// todo 服务监听器？
 	listeners []registry.NotifyListener
 	directory *RegistryDirectory
 }

@@ -60,6 +60,7 @@ type ReferenceConfig struct {
 	Async          bool              `yaml:"async"  json:"async,omitempty" property:"async"`
 	Params         map[string]string `yaml:"params"  json:"params,omitempty" property:"params"`
 	invoker        protocol.Invoker
+	// registry://<address>
 	urls           []*common.URL
 	Generic        bool   `yaml:"generic"  json:"generic,omitempty" property:"generic"`
 	Sticky         bool   `yaml:"sticky"   json:"sticky,omitempty" property:"sticky"`
@@ -92,6 +93,7 @@ func (c *ReferenceConfig) UnmarshalYAML(unmarshal func(interface{}) error) error
 // Refer ...
 func (c *ReferenceConfig) Refer(_ interface{}) {
 	cfgURL := common.NewURLWithOptions(
+		// / + interfaceName
 		common.WithPath(c.InterfaceName),
 		common.WithProtocol(c.Protocol),
 		common.WithParams(c.getUrlMap()),
@@ -123,6 +125,7 @@ func (c *ReferenceConfig) Refer(_ interface{}) {
 		}
 	} else {
 		// 2. assemble SubURL from register center's configuration mode
+		// registry://address
 		c.urls = loadRegistries(c.Registry, consumerConfig.Registries, common.CONSUMER)
 
 		// set url to regUrls
